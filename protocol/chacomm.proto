@@ -1,0 +1,31 @@
+// [START declaration]
+syntax = "proto3";
+package chacomm;
+// [END declaration]
+
+// [START messages]
+
+message Message {
+    oneof packet {
+        ChunkStart chunkstart = 1;
+        ChunkData chunkdata = 2;
+        PollQuery pollquery = 3;
+    }
+}
+
+message ChunkStart {
+    bytes nonce = 1; // Randomly generated (24 bytes) nonce
+    int32 chunkid = 2; // Chunk identifier
+    int32 chunksize = 3; // Chunk count
+}
+
+message ChunkData {
+    int32 chunkid = 1; // Chunk identifier
+    int32 chunknum = 2; // Current chunk identifier
+    bytes packet = 3; // Data
+}
+
+message PollQuery {
+    bytes nonce = 1;
+    bytes identifier = 2;
+}
