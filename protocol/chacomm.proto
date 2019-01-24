@@ -6,10 +6,11 @@ package chacomm;
 // [START messages]
 
 message Message {
+    bytes clientguid = 1;
     oneof packet {
-        ChunkStart chunkstart = 1;
-        ChunkData chunkdata = 2;
-        PollQuery pollquery = 3;
+        ChunkStart chunkstart = 2;
+        ChunkData chunkdata = 3;
+        PollQuery pollquery = 4;
     }
 }
 

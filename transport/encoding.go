@@ -13,8 +13,9 @@ import (
 
 var ChunkMap = map[int32]map[int32]string{}
 var Sessions = map[int32]chacomm.ChunkStart{}
+var currentChunk = 0
 
-func Decode(payload string)(output []byte, complete bool){
+func Decode(payload string, stream dnsStream)(output []byte, complete bool){
 	dataPacketRaw, err := hex.DecodeString(payload)
 
 	if err != nil {
@@ -46,7 +47,7 @@ func Decode(payload string)(output []byte, complete bool){
 					chunkBuffer.WriteString(string(ChunkMap[u.Chunkdata.Chunkid][int32(i)]))
 				}
 
-				output, valid = crypto.Open(chunkBuffer.Bytes(), Sessions[u.Chunkdata.Chunkid].Nonce)
+				output, valid = crypto.Open(chunkBuffer.Bytes(), Sessions[u.Chunkdata.Chunkid].Nonce, stream.encryptionKey)
 				if valid {
 					return output, true
 				} else {
@@ -70,21 +71,17 @@ func dnsMarshal(pb proto.Message, isRequest bool)(string, error){
 		packetHex = strings.Join(utils.Splits(packetHex, 63), ".")
 	}
 
-	if len(packetHex) + len(targetDomain) > 253 {
-		log.Fatal("DNS domain length exceeded.\n")
-	}
-
 	return packetHex, err
 
 }
 
-func ChunkPackets(payload []byte, isRequest bool)(initPacket string, dataPackets []string) {
-	nonce, message := crypto.Seal(payload)
+func Encode(payload []byte, isRequest bool, encryptionKey string, targetDomain string, clientGuid []byte)(initPacket string, dataPackets []string) {
+	nonce, message := crypto.Seal(payload, encryptionKey)
 	/*
 		Chunk the packets so it fits the DNS max length (253)
 	 */
 
-	packets := utils.Split(message, (246/2) - len(targetDomain))
+	packets := utils.Split(message, (240/2) - len(targetDomain) - len(clientGuid))
 
 	/*
 		Increment chunk identifier.
@@ -96,6 +93,7 @@ func ChunkPackets(payload []byte, isRequest bool)(initPacket string, dataPackets
 	*/
 
 	init := &chacomm.Message{
+		Clientguid: clientGuid,
 		Packet:&chacomm.Message_Chunkstart{
 			Chunkstart: &chacomm.ChunkStart{
 				Nonce: nonce[:],
@@ -119,6 +117,7 @@ func ChunkPackets(payload []byte, isRequest bool)(initPacket string, dataPackets
 	for id, packet := range packets {
 
 		data := &chacomm.Message{
+			Clientguid: clientGuid,
 			Packet: &chacomm.Message_Chunkdata{
 				Chunkdata: &chacomm.ChunkData{
 					Chunkid:  int32(currentChunk),
@@ -127,6 +126,7 @@ func ChunkPackets(payload []byte, isRequest bool)(initPacket string, dataPackets
 				},
 			},
 		}
+
 
 		dataPacket, err := dnsMarshal(data, isRequest)
 
