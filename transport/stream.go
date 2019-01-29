@@ -9,9 +9,9 @@ import (
 )
 
 type dnsStream struct {
-	targetDomain string
+	targetDomain  string
 	encryptionKey string
-	clientGuid []byte
+	clientGuid    []byte
 }
 
 func DNSStream(targetDomain string, encryptionKey string) *dnsStream {
@@ -23,7 +23,7 @@ func DNSStream(targetDomain string, encryptionKey string) *dnsStream {
 	return &dnsConfig
 }
 
-func (stream *dnsStream) Read(data []byte)(int, error){
+func (stream *dnsStream) Read(data []byte) (int, error) {
 	packet, err := packetQueue.Get()
 	if err != nil {
 		return 0, err
@@ -33,14 +33,12 @@ func (stream *dnsStream) Read(data []byte)(int, error){
 	return len(stringData), nil
 }
 
-
-func (stream *dnsStream) Write(data []byte)(int, error){
+func (stream *dnsStream) Write(data []byte) (int, error) {
 
 	initPacket, dataPackets := Encode(data, true, stream.encryptionKey, stream.targetDomain, stream.clientGuid)
 
 	/*
 		Send the "init" packet.
-		TODO: Encrypt the init packet.
 	*/
 
 	_, err := sendDNSQuery([]byte(initPacket), stream.targetDomain)
@@ -53,10 +51,9 @@ func (stream *dnsStream) Write(data []byte)(int, error){
 		Send each packets using DNS tunneling.
 	*/
 
-
 	log.Printf("Sending %d packets.\n", len(dataPackets))
 
-	poll := tunny.NewFunc(16, func(packet interface{}) interface{}{
+	poll := tunny.NewFunc(16, func(packet interface{}) interface{} {
 		_, err := sendDNSQuery([]byte(packet.(string)), stream.targetDomain)
 
 		if err != nil {
@@ -73,6 +70,3 @@ func (stream *dnsStream) Write(data []byte)(int, error){
 
 	return len(data), nil
 }
-
-
-

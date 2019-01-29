@@ -15,9 +15,8 @@ message Message {
 }
 
 message ChunkStart {
-    bytes nonce = 1; // Randomly generated (24 bytes) nonce
-    int32 chunkid = 2; // Chunk identifier
-    int32 chunksize = 3; // Chunk count
+    int32 chunkid = 1; // Chunk identifier
+    int32 chunksize = 2; // Chunk count
 }
 
 message ChunkData {
@@ -27,6 +26,9 @@ message ChunkData {
 }
 
 message PollQuery {
-    bytes nonce = 1;
-    bytes identifier = 2;
+
+}
+
+message InfoPacket {
+    bytes hostname = 1;
 }

@@ -23,7 +23,7 @@ func Splits(s string, n int) []string {
 	l := len(runes)
 	for i, r := range runes {
 		sub = sub + string(r)
-		if (i + 1) % n == 0 {
+		if (i+1)%n == 0 {
 			subs = append(subs, sub)
 			sub = ""
 		} else if (i + 1) == l {

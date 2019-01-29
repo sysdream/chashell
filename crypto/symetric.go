@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-func Seal(payload []byte, secretKey string)(nonce [24]byte, message []byte){
+func Seal(payload []byte, secretKey string) (nonce [24]byte, message []byte) {
 	/*
 		Generate a 24 byte nonce
 	*/
@@ -35,7 +35,7 @@ func Seal(payload []byte, secretKey string)(nonce [24]byte, message []byte){
 	return
 }
 
-func Open(payload []byte, in_nonce []byte, secretKey string) (output []byte, valid bool){
+func Open(payload []byte, in_nonce []byte, secretKey string) (output []byte, valid bool) {
 	/*
 		Seal message using XSalsa20 + Poly1305
 	*/
