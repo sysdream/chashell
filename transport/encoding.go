@@ -63,7 +63,6 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 
 			// Check if we have successfully received all the packets.
 			if len(ChunkMap[u.Chunkdata.Chunkid]) == int(Sessions[u.Chunkdata.Chunkid].Chunksize) {
-				log.Printf("Hit chunkcount ! Processing data.")
 
 				// Rebuild the final data.
 				var chunkBuffer bytes.Buffer

@@ -1,3 +1,4 @@
 .idea/
 chaserv
 chaproxy.go
+vendor
