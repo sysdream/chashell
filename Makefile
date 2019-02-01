@@ -1,39 +1,33 @@
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-BUILD_DIR=build/
-SERVER_SOURCE=chaserv.go
-CLIENT_SOURCE=chashell.go
-LDFLAGS=--ldflags "-X main.targetDomain=$(DOMAIN_NAME) -X main.encryptionKey=$(ENCRYPTION_KEY)" -s -w -gcflags "all=-trimpath=$GOPATH"
+
+SERVER_SOURCE=cmd/server/chaserv.go
+CLIENT_SOURCE=cmd/shell/chashell.go
+LDFLAGS="-X main.targetDomain=$(DOMAIN_NAME) -X main.encryptionKey=$(ENCRYPTION_KEY) -s -w"
+GCFLAGS="all=-trimpath=$GOPATH"
 
 CLIENT_BINARY=chashell
 SERVER_BINARY=chaserv
 
-PLATFORMS=darwin linux windows
-ARCHITECTURES=386 amd64
+OSARCH = "linux/amd64 linux/386 linux/arm windows/amd64 windows/386 darwin/amd64 darwin/386"
 
-default: build
+check-env:
+ifndef DOMAIN_NAME
+	$(error DOMAIN_NAME is undefined)
+endif
+ifndef ENCRYPTION_KEY
+	$(error ENCRYPTION_KEY is undefined)
+endif
 
-all: clean build_all install
+dep: check-env
+	go get -v -u github.com/golang/dep/cmd/dep && \
+	go get github.com/mitchellh/gox
 
-build:
-	go build $(LDFLAGS) $(CLIENT_SOURCE) -o ${CLIENT_BINARY}
-	go build $(LDFLAGS) $(SERVER_SOURCE) -o ${SERVER_BINARY}
+build: check-env
+	dep ensure && \
+	go build $(LDFLAGS) -o bin/$(CLIENT_BINARY) $(CLIENT_SOURCE) && \
+	go build $(LDFLAGS) -o bin/$(SERVER_BINARY) $(SERVER_SOURCE)
 
-
-build_all:
-	$(foreach GOOS, $(PLATFORMS),\
-	$(foreach GOARCH, $(ARCHITECTURES), $(shell export GOOS=$(GOOS); export GOARCH=$(GOARCH); \
-	go build $(LDFLAGS) -o release/$(CLIENT_BINARY)-$(GOOS)-$(GOARCH) $(CLIENT_SOURCE);\
-	go build $(LDFLAGS) -o release/$(SERVER_BINARY)-$(GOOS)-$(GOARCH) $(SERVER_SOURCE))))
-
-install:
-	go install ${LDFLAGS}
-
-# Remove only what we've created
-clean:
-	find ${ROOT_DIR} -name '${BINARY}[-?][a-zA-Z0-9]*[-?][a-zA-Z0-9]*' -delete
-
-.PHONY: check clean install build_all all
+build-all: check-env
+	echo "Building server"
+	gox -osarch=$(OSARCH) -ldflags=$(LDFLAGS) -gcflags=$(GCFLAGS) -output "release/chaserv_{{.OS}}_{{.Arch}}" ./cmd/server
+	echo "Building shell"
+	gox -osarch=$(OSARCH) -ldflags=$(LDFLAGS) -gcflags=$(GCFLAGS) -output "release/chashell_{{.OS}}_{{.Arch}}" ./cmd/shell

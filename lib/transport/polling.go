@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"chacomm/protocol"
+	"chacomm/lib/protocol"
 	"log"
 	"strings"
 	"time"
@@ -21,10 +21,10 @@ func pollRead(stream dnsStream) {
 
 func poll(stream dnsStream) {
 
-	pollQuery := &chacomm.Message{
+	pollQuery := &protocol.Message{
 		Clientguid: stream.clientGuid,
-		Packet: &chacomm.Message_Pollquery{
-			Pollquery: &chacomm.PollQuery{},
+		Packet: &protocol.Message_Pollquery{
+			Pollquery: &protocol.PollQuery{},
 		},
 	}
 

@@ -3,9 +3,9 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"chacomm/crypto"
-	"chacomm/protocol"
-	"chacomm/transport"
+	"chacomm/lib/crypto"
+	"chacomm/lib/protocol"
+	"chacomm/lib/transport"
 	"encoding/hex"
 	"fmt"
 	"github.com/c-bata/go-prompt"
@@ -80,7 +80,7 @@ func parseQuery(m *dns.Msg) {
 			}
 
 			// Return the decoded protocol buffers packet.
-			message := &chacomm.Message{}
+			message := &protocol.Message{}
 			if err := proto.Unmarshal(output, message); err != nil {
 				log.Fatalln("Failed to parse message packet:", err)
 			}
@@ -102,7 +102,7 @@ func parseQuery(m *dns.Msg) {
 
 			// If this this a new client, create the associated session.
 			if !valid {
-				log.Printf("New session : %s\n", clientGUID)
+				fmt.Printf("New session : %s\n", clientGUID)
 				sessionsMap[clientGUID] = &clientInfo{heartbeat: now.Unix(), conn: make(map[int32]connData)}
 				session = sessionsMap[clientGUID]
 			}
@@ -115,7 +115,7 @@ func parseQuery(m *dns.Msg) {
 
 			// Identify the message type.
 			switch u := message.Packet.(type) {
-			case *chacomm.Message_Pollquery:
+			case *protocol.Message_Pollquery:
 				// Check if we have data to send.
 				queue, valid := packetQueue[clientGUID]
 
@@ -124,11 +124,11 @@ func parseQuery(m *dns.Msg) {
 					packetQueue[clientGUID] = queue[1:]
 				}
 
-			case *chacomm.Message_Chunkstart:
+			case *protocol.Message_Chunkstart:
 				// We need to allocate a new session in order to store incoming data.
 				session.conn[u.Chunkstart.Chunkid] = connData{chunkSize: u.Chunkstart.Chunksize, packets: make(map[int32]string)}
 
-			case *chacomm.Message_Chunkdata:
+			case *protocol.Message_Chunkdata:
 				// Get the storage associated to the chunkId.
 				connection := session.getChunk(u.Chunkdata.Chunkid)
 
@@ -282,7 +282,7 @@ func main() {
 			now := time.Now()
 			for clientGUID, session := range sessionsMap {
 				if session.heartbeat+30 < now.Unix() {
-					log.Printf("Client timed out [%s].\n", clientGUID)
+					fmt.Printf("Client timed out [%s].\n", clientGUID)
 					// Delete from sessions list.
 					delete(sessionsMap, clientGUID)
 					// Delete all queued packets.

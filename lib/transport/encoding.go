@@ -2,9 +2,9 @@ package transport
 
 import (
 	"bytes"
-	"chacomm/crypto"
-	"chacomm/protocol"
-	"chacomm/utils"
+	"chacomm/lib/crypto"
+	"chacomm/lib/protocol"
+	"chacomm/lib/splitting"
 	"encoding/hex"
 	"github.com/golang/protobuf/proto"
 	"log"
@@ -14,7 +14,7 @@ import (
 // ChunkMap should contains the chunk identifier, the chunk number, and the data associated.
 var ChunkMap = map[int32]map[int32]string{}
 // Sessions should contains the chunk informations about the chunkid associated.
-var Sessions = map[int32]chacomm.ChunkStart{}
+var Sessions = map[int32]protocol.ChunkStart{}
 // Counter to store the current packet identifier.
 var currentChunk = 0
 
@@ -40,7 +40,7 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 	}
 
 	// Parse the "Message" part of the Protocol buffer packet.
-	message := &chacomm.Message{}
+	message := &protocol.Message{}
 	if err := proto.Unmarshal(output, message); err != nil {
 		// This should not append.
 		log.Fatalln("Failed to parse message packet:", err)
@@ -48,12 +48,12 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 
 	// Process the message depending of his type.
 	switch u := message.Packet.(type) {
-	case *chacomm.Message_Chunkstart:
+	case *protocol.Message_Chunkstart:
 		// A chunkstart packet indicate that we need to allocate memory to receive data.
 		Sessions[u.Chunkstart.Chunkid] = *u.Chunkstart
 		ChunkMap[u.Chunkstart.Chunkid] = make(map[int32]string)
 
-	case *chacomm.Message_Chunkdata:
+	case *protocol.Message_Chunkdata:
 		// Check if we have a valid session from this Chunkid.
 		_, valid := Sessions[u.Chunkdata.Chunkid]
 
@@ -105,7 +105,7 @@ func dnsMarshal(pb proto.Message, encryptionKey string, isRequest bool) (string,
 	// If this is a DNS Request, subdomains cannot be longer than 63 chars
 	// We need to split the packet, then join it using "."
 	if isRequest {
-		packetHex = strings.Join(utils.Splits(packetHex, 63), ".")
+		packetHex = strings.Join(splitting.Splits(packetHex, 63), ".")
 	}
 
 	return packetHex, err
@@ -115,16 +115,16 @@ func dnsMarshal(pb proto.Message, encryptionKey string, isRequest bool) (string,
 func Encode(payload []byte, isRequest bool, encryptionKey string, targetDomain string, clientGuid []byte) (initPacket string, dataPackets []string) {
 
 	// Chunk the packets so it fits the DNS max length (253)
-	packets := utils.Split(payload, (240/2)-len(targetDomain)-len(clientGuid)-(24*2))
+	packets := splitting.Split(payload, (240/2)-len(targetDomain)-len(clientGuid)-(24*2))
 
 	// Increment the current chunk identifier
 	currentChunk++
 
 	// Generate the init packet, containing informations about the number of chunks.
-	init := &chacomm.Message{
+	init := &protocol.Message{
 		Clientguid: clientGuid,
-		Packet: &chacomm.Message_Chunkstart{
-			Chunkstart: &chacomm.ChunkStart{
+		Packet: &protocol.Message_Chunkstart{
+			Chunkstart: &protocol.ChunkStart{
 				Chunkid:   int32(currentChunk),
 				Chunksize: int32(len(packets)),
 			},
@@ -142,10 +142,10 @@ func Encode(payload []byte, isRequest bool, encryptionKey string, targetDomain s
 	for id, packet := range packets {
 
 		// Generate the "data" packet, containing the current chunk information and data.
-		data := &chacomm.Message{
+		data := &protocol.Message{
 			Clientguid: clientGuid,
-			Packet: &chacomm.Message_Chunkdata{
-				Chunkdata: &chacomm.ChunkData{
+			Packet: &protocol.Message_Chunkdata{
+				Chunkdata: &protocol.ChunkData{
 					Chunkid:  int32(currentChunk),
 					Chunknum: int32(id),
 					Packet:   []byte(packet),
