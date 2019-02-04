@@ -3,9 +3,9 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"chacomm/lib/crypto"
-	"chacomm/lib/protocol"
-	"chacomm/lib/transport"
+	"chashell/lib/crypto"
+	"chashell/lib/protocol"
+	"chashell/lib/transport"
 	"encoding/hex"
 	"fmt"
 	"github.com/c-bata/go-prompt"

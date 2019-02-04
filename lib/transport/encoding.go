@@ -2,9 +2,9 @@ package transport
 
 import (
 	"bytes"
-	"chacomm/lib/crypto"
-	"chacomm/lib/protocol"
-	"chacomm/lib/splitting"
+	"chashell/lib/crypto"
+	"chashell/lib/protocol"
+	"chashell/lib/splitting"
 	"encoding/hex"
 	"github.com/golang/protobuf/proto"
 	"log"

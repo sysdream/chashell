@@ -1,7 +1,7 @@
 package main
 
 import (
-	"chacomm/lib/transport"
+	"chashell/lib/transport"
 	"os/exec"
 	"runtime"
 )

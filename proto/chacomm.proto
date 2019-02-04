@@ -1,6 +1,6 @@
 // [START declaration]
 syntax = "proto3";
-package chacomm;
+package protocol;
 // [END declaration]
 
 // [START messages]
