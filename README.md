@@ -14,7 +14,17 @@ It comes with a multi-client control server named *chaserv*.
 Every packets are encrypted using symetric cryptography ([XSalsa20](https://en.wikipedia.org/wiki/Salsa20) + [Poly1305](https://en.wikipedia.org/wiki/Poly1305)) with a shared key between the client
 and the server.
 
-Asymetric cryptography is **planned**, however we still have issues regarding the key exchange.
+Asymmetric cryptography is **planned**.
+
+### Protocol
+
+Chashell communicate using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. The .proto file is available in the **proto** folder.
+
+Here is a (simplified) communication chart :
+
+![Protocol](img/proto.png)
+
+Keep in mind that every packets are encrypted, hex-encoded and then packed for DNS.
 
 ### Supported systems
 
@@ -30,7 +40,7 @@ We tested those systems and it works without issues :
 
 #### Building
 
-Build all the binaries (change the domain_name and the encryption key) :
+Build all the binaries (change the domain_name and the encryption_key) :
 
 
 ```
@@ -105,3 +115,8 @@ cmd.Stdin = dnsTransport
 cmd.Run()
 ```
 
+## To Do
+
+* Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305))
+* Retrieve the hostname using the InfoPacket message.
+* Create a "proxy/relay" tool in order to tunnel TCP/UDP streams. (Meterpreter over DNS !)
