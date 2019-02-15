@@ -10,8 +10,8 @@ import (
 )
 
 func interact(sessionID string) {
-	buffer, dataAvailble := consoleBuffer[sessionID]
-	if dataAvailble && buffer.Len() > 0 {
+	buffer, dataAvailable := consoleBuffer[sessionID]
+	if dataAvailable && buffer.Len() > 0 {
 		fmt.Println(buffer.String())
 	}
 	delete(consoleBuffer, sessionID)
