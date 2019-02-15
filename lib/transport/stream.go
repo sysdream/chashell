@@ -49,7 +49,7 @@ func (stream *dnsStream) Write(data []byte) (int, error) {
 
 
 	// Create a worker pool to asynchronously send DNS packets.
-	poll := tunny.NewFunc(4, func(packet interface{}) interface{} {
+	poll := tunny.NewFunc(8, func(packet interface{}) interface{} {
 		_, err := sendDNSQuery([]byte(packet.(string)), stream.targetDomain)
 
 		if err != nil {

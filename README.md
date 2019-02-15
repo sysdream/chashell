@@ -34,11 +34,13 @@ We tested those systems and it works without issues :
 
 * Windows (386/amd64)
 * Linux (386/amd64/arm64)
-
+* Mac OS X (386/amd64)
 
 ### How to use Chaserv/Chashell
 
 #### Building
+
+Make sure the [GOPATH](https://github.com/golang/go/wiki/GOPATH) environment variable is correctly configured before running those commands.
 
 Build all the binaries (adjust the domain_name and the encryption_key to your needs):
 

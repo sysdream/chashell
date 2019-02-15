@@ -48,7 +48,6 @@ func poll(stream dnsStream) {
 		}
 		output, complete := Decode(packetData, stream.encryptionKey)
 		if complete {
-			log.Printf("Final data: %s\n", output)
 			packetQueue <- output
 		} else {
 			// More data available. Get it!

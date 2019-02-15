@@ -10,6 +10,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/miekg/dns"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -65,14 +66,14 @@ func parseQuery(m *dns.Msg) {
 			dataPacketRaw, err := hex.DecodeString(dataPacket)
 
 			if err != nil {
-				log.Printf("Unable to decode data packet : %s", dataPacket)
+				fmt.Printf("Unable to decode data packet : %s", dataPacket)
 			}
 
 			// Attempt to decrypt and authenticate the packet.
 			output, valid := crypto.Open(dataPacketRaw[24:], dataPacketRaw[:24], encryptionKey)
 
 			if !valid {
-				log.Printf("Received invalid/corrupted packet. Dropping.\n")
+				fmt.Printf("Received invalid/corrupted packet. Dropping.\n")
 				break
 			}
 
@@ -89,6 +90,7 @@ func parseQuery(m *dns.Msg) {
 			clientGUID := hex.EncodeToString(message.Clientguid)
 
 			if clientGUID == "" {
+				fmt.Println("Invalid packet : empty clientGUID !")
 				break
 			}
 
@@ -149,11 +151,12 @@ func parseQuery(m *dns.Msg) {
 				}
 
 			default:
-				log.Printf("Unknown message type received : %v\n", u)
+				fmt.Printf("Unknown message type received : %v\n", u)
 			}
 			// Unlock the mutex.
 			session.mutex.Unlock()
-			rr, _ := dns.NewRR(fmt.Sprintf("%s TXT %s", ".", answer))
+
+			rr, _ := dns.NewRR(fmt.Sprintf("%s TXT %s", q.Name, answer))
 			m.Answer = append(m.Answer, rr)
 
 		}
@@ -189,7 +192,8 @@ func main() {
 		err := server.ListenAndServe()
 		defer server.Shutdown()
 		if err != nil {
-			log.Fatalf("Failed to start server: %s\n ", err.Error())
+			fmt.Printf("Failed to start server: %s\n ", err.Error())
+			os.Exit(1)
 		}
 	}()
 
