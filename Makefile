@@ -1,6 +1,6 @@
 
-SERVER_SOURCE=cmd/server/chaserv.go
-CLIENT_SOURCE=cmd/shell/chashell.go
+SERVER_SOURCE=./cmd/server
+CLIENT_SOURCE=./cmd/shell
 LDFLAGS="-X main.targetDomain=$(DOMAIN_NAME) -X main.encryptionKey=$(ENCRYPTION_KEY) -s -w"
 GCFLAGS="all=-trimpath=$GOPATH"
 
@@ -12,7 +12,7 @@ OSARCH = "linux/amd64 linux/386 linux/arm windows/amd64 windows/386 darwin/amd64
 .DEFAULT: help
 
 help: ## Show Help
-    @grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 check-env: ## Check if necessary environment variables are set.
 ifndef DOMAIN_NAME
@@ -25,7 +25,7 @@ endif
 build: check-env ## Build for the current architecture.
 	dep ensure && \
 	go build -ldflags $(LDFLAGS) -gcflags $(GCFLAGS) -o release/$(CLIENT_BINARY) $(CLIENT_SOURCE) && \
-	go build -ldflags $(LDFLAGS) -gcflags $(GCFLAGS) $(LDFLAGS) -o release/$(SERVER_BINARY) $(SERVER_SOURCE)
+	go build -ldflags $(LDFLAGS) -gcflags $(GCFLAGS) -o release/$(SERVER_BINARY) $(SERVER_SOURCE)
 
 dep: check-env ## Get all the required dependencies
 	go get -v -u github.com/golang/dep/cmd/dep && \
@@ -44,5 +44,9 @@ build-server: check-env ## Build the chashell server.
 
 build-all: check-env build-client build-server ## Build everything.
 
-proto:
+proto: ## Build the protocol buffer file
 	protoc -I=proto/ --go_out=lib/protocol chacomm.proto
+
+clean: ## Remove all the generated binaries
+	rm -f release/chaserv*
+	rm -f release/chashell*

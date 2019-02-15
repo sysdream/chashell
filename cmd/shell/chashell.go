@@ -15,7 +15,7 @@ func main() {
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("powershell.exe")
+		cmd = exec.Command("cmd.exe")
 	} else {
 		cmd = exec.Command("/bin/sh", "-c", "/bin/sh")
 	}

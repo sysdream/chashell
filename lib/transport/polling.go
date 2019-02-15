@@ -21,6 +21,7 @@ func pollRead(stream dnsStream) {
 
 func poll(stream dnsStream) {
 
+	// Create a "polling" request.
 	pollQuery := &protocol.Message{
 		Clientguid: stream.clientGuid,
 		Packet: &protocol.Message_Pollquery{
@@ -50,7 +51,7 @@ func poll(stream dnsStream) {
 			log.Printf("Final data: %s\n", output)
 			packetQueue <- output
 		} else {
-			/* More data available. Get it !*/
+			// More data available. Get it!
 			poll(stream)
 		}
 

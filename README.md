@@ -18,7 +18,7 @@ Asymmetric cryptography is **planned**.
 
 ### Protocol
 
-Chashell communicate using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. The .proto file is available in the **proto** folder.
+Chashell communicate using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. The Protocol Buffers message format (.proto file) is available in the **proto** folder.
 
 Here is a (simplified) communication chart :
 
@@ -117,6 +117,8 @@ cmd.Run()
 
 ## To Do
 
-* Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305))
+* Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305)).
 * Retrieve the hostname using the InfoPacket message.
-* Create a "proxy/relay" tool in order to tunnel TCP/UDP streams. (Meterpreter over DNS !)
+* Create a "proxy/relay" tool in order to tunnel TCP/UDP streams (Meterpreter over DNS !).
+* Protection against denial of service attacks.
+* Use less dependencies.

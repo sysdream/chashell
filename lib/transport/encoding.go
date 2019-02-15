@@ -23,12 +23,14 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 	dataPacketRaw, err := hex.DecodeString(payload)
 
 	if err != nil {
-		log.Fatal("Invalid packet.\n")
+		log.Println("Invalid packet.\n")
+		return
 	}
 
 	// Check if the packet is big enough to fit the nonce.
 	if len(dataPacketRaw) <= 24 {
-		log.Fatal("Received packet is too small!\n")
+		log.Println("Received packet is too small!\n")
+		return
 	}
 
 	// Authenticate and decrypt the packet.
@@ -36,14 +38,16 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 
 	// Raise an error if the message is invalid.
 	if !valid {
-		log.Fatal("Received invalid/corrupted packet.\n")
+		log.Println("Received invalid/corrupted packet.\n")
+		return
 	}
 
 	// Parse the "Message" part of the Protocol buffer packet.
 	message := &protocol.Message{}
 	if err := proto.Unmarshal(output, message); err != nil {
 		// This should not append.
-		log.Fatalln("Failed to parse message packet:", err)
+		log.Printf("Failed to parse message packet: %v\n", err)
+		return
 	}
 
 	// Process the message depending of his type.
