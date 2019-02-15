@@ -5,7 +5,7 @@
 Chashell is a [Go](https://golang.org/) reverse shell that communicates over DNS. 
 It can be used to bypass firewalls or tightly restricted networks.
 
-It comes with a multi-client control server, named *chaserv*.
+It comes with a multi-client control server, named `chaserv`.
 
 ![Chaserv](img/chaserv.gif)
 
@@ -18,7 +18,7 @@ We plan to implement asymmetric cryptography in the future.
 
 ### Protocol
 
-Chashell communicates using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. The `.proto` file is available in the `proto` folder.
+Chashell communicates using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. For reference, the Protocol Buffers structure (`.proto` file) is available in the `proto` folder.
 
 Here is a (simplified) communication chart :
 
@@ -40,7 +40,7 @@ We tested those systems and it works without issues :
 
 #### Building
 
-Make sure the [GOPATH](https://github.com/golang/go/wiki/GOPATH) environment variable is correctly configured before running those commands.
+Make sure the [GOPATH](https://github.com/golang/go/wiki/GOPATH) environment variable is correctly configured before running these commands.
 
 Build all the binaries (adjust the domain_name and the encryption_key to your needs):
 
@@ -106,14 +106,14 @@ usr
 var
 ```
 
-Use the *sessions [sessionid]* command to interact with a client.
-When interacting with a session, you can use the *background* session in order to return to the *chashell* prompt.
+Use the `sessions [sessionid]` command to interact with a client.
+When interacting with a session, you can use the `background` session in order to return to the `chashell` prompt.
 
-Use the *exit* command to close *chaserv*.
+Use the `exit` command to close `chaserv`.
 
 ## Implement your own
 
-The *chashell/lib/transport* library is compatible with the *io.Reader* / *io.Writer* interface. So, implementing a reverse shell is as easy as :
+The `chashell/lib/transport` library is compatible with the `io.Reader` / `io.Writer` interface. So, implementing a reverse shell is as easy as :
 
 ```go
 cmd := exec.Command("/bin/sh")
@@ -128,13 +128,15 @@ cmd.Run()
 
 ## Debugging
 
-For more verbose messages, add *TAGS=debug* at the end of the make command.
+For more verbose messages, add `TAGS=debug` at the end of the make command.
 
 ## To Do
 
 * Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305))
 * Retrieve the host name using the `InfoPacket` message.
-* Create a *proxy/relay* tool in order to tunnel TCP/UDP streams. (Meterpreter over DNS !)
+* Create a *proxy/relay* tool in order to tunnel TCP/UDP streams (Meterpreter over DNS !).
+* Better error handling.
+* Get rid of dependencies.
 
 ## Credits
 
