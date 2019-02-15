@@ -10,7 +10,10 @@ import (
 )
 
 func interact(sessionID string) {
-	fmt.Println(consoleBuffer[sessionID])
+	buffer, dataAvailble := consoleBuffer[sessionID]
+	if dataAvailble && buffer.Len() > 0 {
+		fmt.Println(buffer.String())
+	}
 	delete(consoleBuffer, sessionID)
 
 	currentSession = sessionID

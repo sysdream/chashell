@@ -3,11 +3,11 @@ package transport
 import (
 	"bytes"
 	"chashell/lib/crypto"
+	"chashell/lib/logging"
 	"chashell/lib/protocol"
 	"chashell/lib/splitting"
 	"encoding/hex"
 	"github.com/golang/protobuf/proto"
-	"log"
 	"strings"
 )
 
@@ -23,13 +23,13 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 	dataPacketRaw, err := hex.DecodeString(payload)
 
 	if err != nil {
-		log.Println("Invalid packet.\n")
+		logging.Println("Invalid packet.\n")
 		return
 	}
 
 	// Check if the packet is big enough to fit the nonce.
 	if len(dataPacketRaw) <= 24 {
-		log.Println("Received packet is too small!\n")
+		logging.Println("Received packet is too small!\n")
 		return
 	}
 
@@ -38,7 +38,7 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 
 	// Raise an error if the message is invalid.
 	if !valid {
-		log.Println("Received invalid/corrupted packet.\n")
+		logging.Println("Received invalid/corrupted packet.\n")
 		return
 	}
 
@@ -46,7 +46,7 @@ func Decode(payload string, encryptionKey string) (output []byte, complete bool)
 	message := &protocol.Message{}
 	if err := proto.Unmarshal(output, message); err != nil {
 		// This should not append.
-		log.Printf("Failed to parse message packet: %v\n", err)
+		logging.Printf("Failed to parse message packet: %v\n", err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func dnsMarshal(pb proto.Message, encryptionKey string, isRequest bool) (string,
 	packet, err := proto.Marshal(pb)
 
 	if err != nil {
-		log.Fatal("Unable to marshal packet.\n")
+		logging.Fatal("Unable to marshal packet.\n")
 	}
 
 	// Encrypt the message.
@@ -139,7 +139,7 @@ func Encode(payload []byte, isRequest bool, encryptionKey string, targetDomain s
 	initPacket, err := dnsMarshal(init, encryptionKey, isRequest)
 
 	if err != nil {
-		log.Fatalf("Init marshaling fatal error : %v\n", err)
+		logging.Fatalf("Init marshaling fatal error : %v\n", err)
 	}
 
 	// Iterate over every chunks.
@@ -161,7 +161,7 @@ func Encode(payload []byte, isRequest bool, encryptionKey string, targetDomain s
 		dataPacket, err := dnsMarshal(data, encryptionKey, isRequest)
 
 		if err != nil {
-			log.Fatalf("Packet marshaling fatal error : %v\n", err)
+			logging.Fatalf("Packet marshaling fatal error : %v\n", err)
 		}
 
 		dataPackets = append(dataPackets, dataPacket)

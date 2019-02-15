@@ -1,10 +1,10 @@
 package transport
 
 import (
+	"chashell/lib/logging"
 	"github.com/Jeffail/tunny"
 	"github.com/rs/xid"
 	"io"
-	"log"
 )
 
 type dnsStream struct {
@@ -43,7 +43,7 @@ func (stream *dnsStream) Write(data []byte) (int, error) {
 	// Send the init packet to inform that we will send data.
 	_, err := sendDNSQuery([]byte(initPacket), stream.targetDomain)
 	if err != nil {
-		log.Printf("Unable to send init packet : %v\n", err)
+		logging.Printf("Unable to send init packet : %v\n", err)
 		return 0, io.ErrClosedPipe
 	}
 
@@ -53,7 +53,7 @@ func (stream *dnsStream) Write(data []byte) (int, error) {
 		_, err := sendDNSQuery([]byte(packet.(string)), stream.targetDomain)
 
 		if err != nil {
-			log.Printf("Failed to send data packet : %v\n", err)
+			logging.Printf("Failed to send data packet : %v\n", err)
 
 		}
 		return nil

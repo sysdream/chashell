@@ -1,8 +1,8 @@
 package transport
 
 import (
+	"chashell/lib/logging"
 	"chashell/lib/protocol"
-	"log"
 	"strings"
 	"time"
 )
@@ -32,12 +32,12 @@ func poll(stream dnsStream) {
 	pollPacket, err := dnsMarshal(pollQuery, stream.encryptionKey, true)
 
 	if err != nil {
-		log.Fatal("Poll marshaling fatal error : %v\n", err)
+		logging.Fatal("Poll marshaling fatal error : %v\n", err)
 	}
 
 	answers, err := sendDNSQuery([]byte(pollPacket), stream.targetDomain)
 	if err != nil {
-		log.Printf("Could not get answer : %v\n", err)
+		logging.Printf("Could not get answer : %v\n", err)
 		return
 	}
 
