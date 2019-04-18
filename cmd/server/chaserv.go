@@ -103,6 +103,7 @@ func parseQuery(m *dns.Msg) {
 			if !valid {
 				fmt.Printf("New session : %s\n", clientGUID)
 				sessionsMap[clientGUID] = &clientInfo{heartbeat: now.Unix(), conn: make(map[int32]connData)}
+				consoleBuffer[clientGUID] = &bytes.Buffer{}
 				session = sessionsMap[clientGUID]
 			}
 

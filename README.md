@@ -107,7 +107,7 @@ var
 ```
 
 Use the `sessions [sessionid]` command to interact with a client.
-When interacting with a session, you can use the `background` session in order to return to the `chashell` prompt.
+When interacting with a session, you can use the `background` command in order to return to the `chashell` prompt.
 
 Use the `exit` command to close `chaserv`.
 
