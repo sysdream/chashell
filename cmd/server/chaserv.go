@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"chashell/lib/crypto"
+	"chashell/lib/logging"
 	"chashell/lib/protocol"
 	"encoding/hex"
 	"fmt"
@@ -35,6 +36,10 @@ var packetQueue = map[string][]string{}
 // Store the sessions information.
 var sessionsMap = map[string]*clientInfo{}
 
+// Temporary store the polled query. Some DNS Servers will perform multiples DNS requests for one query.
+// We need to send the same query to every requests or the Chashell client will not receive the data.
+var pollCache = map[string]*pollTemporaryData{}
+
 type clientInfo struct {
 	hostname  string
 	heartbeat int64
@@ -46,6 +51,11 @@ type connData struct {
 	chunkSize int32
 	nonce     []byte
 	packets   map[int32]string
+}
+
+type pollTemporaryData struct {
+	lastseen int64
+	data string
 }
 
 func (ci *clientInfo) getChunk(chunkID int32) connData {
@@ -116,21 +126,50 @@ func parseQuery(m *dns.Msg) {
 			// Identify the message type.
 			switch u := message.Packet.(type) {
 			case *protocol.Message_Pollquery:
+				// Check if this DNS poll-request was already performed.
+				temp, valid := pollCache[string(dataPacketRaw)]
+				if valid {
+					log.Println("Duplicated poll query received.")
+					// Send already in cache data.
+					answer = temp.data
+					break
+				}
+
 				// Check if we have data to send.
 				queue, valid := packetQueue[clientGUID]
 
 				if valid && len(queue) > 0 {
 					answer = queue[0]
+					// Store answer in cache for DNS servers which are sending multiple queries.
+					pollCache[string(dataPacketRaw)] = &pollTemporaryData{lastseen: now.Unix(), data: answer}
+					// Dequeue.
 					packetQueue[clientGUID] = queue[1:]
 				}
+			case *protocol.Message_Infopacket:
+				session.hostname = string(u.Infopacket.Hostname)
 
 			case *protocol.Message_Chunkstart:
+				// Some DNS Servers will send multiple DNS queries, ignore duplicates.
+				_, valid := session.conn[u.Chunkstart.Chunkid]
+				if valid {
+					log.Printf("Ignoring duplicated Chunkstart : %d\n", u.Chunkstart.Chunkid)
+					break
+				}
+
 				// We need to allocate a new session in order to store incoming data.
 				session.conn[u.Chunkstart.Chunkid] = connData{chunkSize: u.Chunkstart.Chunksize, packets: make(map[int32]string)}
+
 
 			case *protocol.Message_Chunkdata:
 				// Get the storage associated to the chunkId.
 				connection := session.getChunk(u.Chunkdata.Chunkid)
+
+				// Some DNS Servers will send multiple DNS queries, ignore duplicates.
+				_, valid := connection.packets[u.Chunkdata.Chunknum]
+				if valid {
+					log.Printf("Ignoring duplicated Chunkdata : %v\n", u.Chunkdata)
+					break
+				}
 
 				// Store the data packet.
 				connection.packets[u.Chunkdata.Chunknum] = string(u.Chunkdata.Packet)
@@ -150,6 +189,7 @@ func parseQuery(m *dns.Msg) {
 						consoleBuffer[clientGUID].Write(chunkBuffer.Bytes())
 					}
 				}
+
 
 			default:
 				fmt.Printf("Unknown message type received : %v\n", u)
@@ -198,6 +238,7 @@ func main() {
 		}
 	}()
 
+	// Timeout checking loop
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)
@@ -209,6 +250,21 @@ func main() {
 					delete(sessionsMap, clientGUID)
 					// Delete all queued packets.
 					delete(packetQueue, clientGUID)
+				}
+			}
+		}
+	}()
+
+	// Poll-cache cleaner
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			now := time.Now()
+			for pollData, cache := range pollCache {
+				if cache.lastseen + 10 < now.Unix() {
+					logging.Printf("Dropping cached poll query : %v\n", pollData)
+					// Delete from poll cache list.
+					delete(pollCache, pollData)
 				}
 			}
 		}
