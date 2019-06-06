@@ -3,9 +3,11 @@
 
 package protocol
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -16,7 +18,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Message struct {
 	Clientguid []byte `protobuf:"bytes,1,opt,name=clientguid,proto3" json:"clientguid,omitempty"`
@@ -24,6 +26,7 @@ type Message struct {
 	//	*Message_Chunkstart
 	//	*Message_Chunkdata
 	//	*Message_Pollquery
+	//	*Message_Infopacket
 	Packet               isMessage_Packet `protobuf_oneof:"packet"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
@@ -34,16 +37,17 @@ func (m *Message) Reset()         { *m = Message{} }
 func (m *Message) String() string { return proto.CompactTextString(m) }
 func (*Message) ProtoMessage()    {}
 func (*Message) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chacomm_869158ad40160a3f, []int{0}
+	return fileDescriptor_d953d7eba1c19408, []int{0}
 }
+
 func (m *Message) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Message.Unmarshal(m, b)
 }
 func (m *Message) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Message.Marshal(b, m, deterministic)
 }
-func (dst *Message) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Message.Merge(dst, src)
+func (m *Message) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Message.Merge(m, src)
 }
 func (m *Message) XXX_Size() int {
 	return xxx_messageInfo_Message.Size(m)
@@ -77,11 +81,17 @@ type Message_Pollquery struct {
 	Pollquery *PollQuery `protobuf:"bytes,4,opt,name=pollquery,proto3,oneof"`
 }
 
+type Message_Infopacket struct {
+	Infopacket *InfoPacket `protobuf:"bytes,5,opt,name=infopacket,proto3,oneof"`
+}
+
 func (*Message_Chunkstart) isMessage_Packet() {}
 
 func (*Message_Chunkdata) isMessage_Packet() {}
 
 func (*Message_Pollquery) isMessage_Packet() {}
+
+func (*Message_Infopacket) isMessage_Packet() {}
 
 func (m *Message) GetPacket() isMessage_Packet {
 	if m != nil {
@@ -111,97 +121,21 @@ func (m *Message) GetPollquery() *PollQuery {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Message) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Message_OneofMarshaler, _Message_OneofUnmarshaler, _Message_OneofSizer, []interface{}{
-		(*Message_Chunkstart)(nil),
-		(*Message_Chunkdata)(nil),
-		(*Message_Pollquery)(nil),
-	}
-}
-
-func _Message_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Message)
-	// packet
-	switch x := m.Packet.(type) {
-	case *Message_Chunkstart:
-		b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Chunkstart); err != nil {
-			return err
-		}
-	case *Message_Chunkdata:
-		b.EncodeVarint(3<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Chunkdata); err != nil {
-			return err
-		}
-	case *Message_Pollquery:
-		b.EncodeVarint(4<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Pollquery); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("Message.Packet has unexpected type %T", x)
+func (m *Message) GetInfopacket() *InfoPacket {
+	if x, ok := m.GetPacket().(*Message_Infopacket); ok {
+		return x.Infopacket
 	}
 	return nil
 }
 
-func _Message_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Message)
-	switch tag {
-	case 2: // packet.chunkstart
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ChunkStart)
-		err := b.DecodeMessage(msg)
-		m.Packet = &Message_Chunkstart{msg}
-		return true, err
-	case 3: // packet.chunkdata
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ChunkData)
-		err := b.DecodeMessage(msg)
-		m.Packet = &Message_Chunkdata{msg}
-		return true, err
-	case 4: // packet.pollquery
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(PollQuery)
-		err := b.DecodeMessage(msg)
-		m.Packet = &Message_Pollquery{msg}
-		return true, err
-	default:
-		return false, nil
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Message) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*Message_Chunkstart)(nil),
+		(*Message_Chunkdata)(nil),
+		(*Message_Pollquery)(nil),
+		(*Message_Infopacket)(nil),
 	}
-}
-
-func _Message_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Message)
-	// packet
-	switch x := m.Packet.(type) {
-	case *Message_Chunkstart:
-		s := proto.Size(x.Chunkstart)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Message_Chunkdata:
-		s := proto.Size(x.Chunkdata)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Message_Pollquery:
-		s := proto.Size(x.Pollquery)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type ChunkStart struct {
@@ -216,16 +150,17 @@ func (m *ChunkStart) Reset()         { *m = ChunkStart{} }
 func (m *ChunkStart) String() string { return proto.CompactTextString(m) }
 func (*ChunkStart) ProtoMessage()    {}
 func (*ChunkStart) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chacomm_869158ad40160a3f, []int{1}
+	return fileDescriptor_d953d7eba1c19408, []int{1}
 }
+
 func (m *ChunkStart) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ChunkStart.Unmarshal(m, b)
 }
 func (m *ChunkStart) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ChunkStart.Marshal(b, m, deterministic)
 }
-func (dst *ChunkStart) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChunkStart.Merge(dst, src)
+func (m *ChunkStart) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChunkStart.Merge(m, src)
 }
 func (m *ChunkStart) XXX_Size() int {
 	return xxx_messageInfo_ChunkStart.Size(m)
@@ -263,16 +198,17 @@ func (m *ChunkData) Reset()         { *m = ChunkData{} }
 func (m *ChunkData) String() string { return proto.CompactTextString(m) }
 func (*ChunkData) ProtoMessage()    {}
 func (*ChunkData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chacomm_869158ad40160a3f, []int{2}
+	return fileDescriptor_d953d7eba1c19408, []int{2}
 }
+
 func (m *ChunkData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ChunkData.Unmarshal(m, b)
 }
 func (m *ChunkData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ChunkData.Marshal(b, m, deterministic)
 }
-func (dst *ChunkData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChunkData.Merge(dst, src)
+func (m *ChunkData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChunkData.Merge(m, src)
 }
 func (m *ChunkData) XXX_Size() int {
 	return xxx_messageInfo_ChunkData.Size(m)
@@ -314,16 +250,17 @@ func (m *PollQuery) Reset()         { *m = PollQuery{} }
 func (m *PollQuery) String() string { return proto.CompactTextString(m) }
 func (*PollQuery) ProtoMessage()    {}
 func (*PollQuery) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chacomm_869158ad40160a3f, []int{3}
+	return fileDescriptor_d953d7eba1c19408, []int{3}
 }
+
 func (m *PollQuery) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PollQuery.Unmarshal(m, b)
 }
 func (m *PollQuery) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PollQuery.Marshal(b, m, deterministic)
 }
-func (dst *PollQuery) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PollQuery.Merge(dst, src)
+func (m *PollQuery) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PollQuery.Merge(m, src)
 }
 func (m *PollQuery) XXX_Size() int {
 	return xxx_messageInfo_PollQuery.Size(m)
@@ -345,16 +282,17 @@ func (m *InfoPacket) Reset()         { *m = InfoPacket{} }
 func (m *InfoPacket) String() string { return proto.CompactTextString(m) }
 func (*InfoPacket) ProtoMessage()    {}
 func (*InfoPacket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_chacomm_869158ad40160a3f, []int{4}
+	return fileDescriptor_d953d7eba1c19408, []int{4}
 }
+
 func (m *InfoPacket) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_InfoPacket.Unmarshal(m, b)
 }
 func (m *InfoPacket) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_InfoPacket.Marshal(b, m, deterministic)
 }
-func (dst *InfoPacket) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InfoPacket.Merge(dst, src)
+func (m *InfoPacket) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InfoPacket.Merge(m, src)
 }
 func (m *InfoPacket) XXX_Size() int {
 	return xxx_messageInfo_InfoPacket.Size(m)
@@ -380,25 +318,27 @@ func init() {
 	proto.RegisterType((*InfoPacket)(nil), "protocol.InfoPacket")
 }
 
-func init() { proto.RegisterFile("chacomm.proto", fileDescriptor_chacomm_869158ad40160a3f) }
+func init() { proto.RegisterFile("chacomm.proto", fileDescriptor_d953d7eba1c19408) }
 
-var fileDescriptor_chacomm_869158ad40160a3f = []byte{
-	// 272 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_d953d7eba1c19408 = []byte{
+	// 289 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x51, 0xb1, 0x4e, 0xc3, 0x30,
-	0x14, 0x6c, 0x80, 0xb6, 0xc9, 0x6b, 0x59, 0x0c, 0x42, 0x16, 0x42, 0xa8, 0xca, 0x94, 0x29, 0x03,
-	0x95, 0xf8, 0x00, 0xe8, 0x50, 0x06, 0xa4, 0x62, 0x26, 0x46, 0xe3, 0x9a, 0x26, 0xaa, 0x63, 0x87,
-	0xd8, 0x19, 0xe0, 0x3f, 0xf9, 0x1f, 0xe4, 0xa7, 0xc4, 0xa9, 0x3a, 0x74, 0xb2, 0xef, 0xdd, 0xbb,
-	0xd3, 0x9d, 0x0d, 0x97, 0xa2, 0xe0, 0xc2, 0x54, 0x55, 0x5e, 0x37, 0xc6, 0x19, 0x12, 0xe3, 0x21,
-	0x8c, 0x4a, 0xff, 0x22, 0x98, 0xbe, 0x4a, 0x6b, 0xf9, 0x4e, 0x92, 0x7b, 0x00, 0xa1, 0x4a, 0xa9,
-	0xdd, 0xae, 0x2d, 0xb7, 0x34, 0x5a, 0x44, 0xd9, 0x9c, 0x1d, 0x4c, 0xc8, 0x23, 0x80, 0x28, 0x5a,
-	0xbd, 0xb7, 0x8e, 0x37, 0x8e, 0x9e, 0x2d, 0xa2, 0x6c, 0xf6, 0x70, 0x9d, 0xf7, 0x56, 0xf9, 0xb3,
-	0xe7, 0xde, 0x3d, 0xb7, 0x1e, 0xb1, 0x83, 0x4d, 0xb2, 0x84, 0x04, 0xd1, 0x96, 0x3b, 0x4e, 0xcf,
-	0x51, 0x76, 0x75, 0x24, 0x5b, 0x71, 0xc7, 0xd7, 0x23, 0x36, 0xec, 0x79, 0x51, 0x6d, 0x94, 0xfa,
-	0x6e, 0x65, 0xf3, 0x43, 0x2f, 0x8e, 0x45, 0x1b, 0xa3, 0xd4, 0x9b, 0xa7, 0xbc, 0x28, 0xec, 0x3d,
-	0xc5, 0x30, 0xa9, 0xb9, 0xd8, 0x4b, 0x97, 0xae, 0x00, 0x86, 0x3c, 0x84, 0xc2, 0x14, 0x9d, 0xbb,
-	0x5a, 0x63, 0xd6, 0x43, 0x72, 0xd7, 0x65, 0xb3, 0xe5, 0xaf, 0xc4, 0x4a, 0x63, 0x36, 0x0c, 0xd2,
-	0x0f, 0x48, 0x42, 0xbc, 0x13, 0x26, 0xb7, 0x10, 0xe3, 0x55, 0xb7, 0x55, 0xe7, 0x11, 0x30, 0xb9,
-	0xe9, 0x23, 0x61, 0xf3, 0x39, 0xeb, 0x03, 0xce, 0x20, 0x09, 0x25, 0xd2, 0x0c, 0xe0, 0x45, 0x7f,
-	0x99, 0x0d, 0x52, 0xde, 0xae, 0x30, 0xd6, 0x69, 0x5e, 0xc9, 0xee, 0x17, 0x02, 0xfe, 0x9c, 0xe0,
-	0x13, 0x2c, 0xff, 0x03, 0x00, 0x00, 0xff, 0xff, 0xac, 0x0a, 0x5c, 0x66, 0xd1, 0x01, 0x00, 0x00,
+	0x14, 0x6c, 0x0b, 0x69, 0x93, 0xd7, 0xb2, 0x18, 0x84, 0x2c, 0x84, 0x50, 0x95, 0x29, 0x53, 0x06,
+	0x2a, 0xf1, 0x01, 0xd0, 0xa1, 0x0c, 0x48, 0xc5, 0x4c, 0x8c, 0xc6, 0x75, 0x9b, 0xa8, 0x8e, 0x1d,
+	0x62, 0x67, 0x80, 0x7f, 0xe0, 0x9f, 0x91, 0x4d, 0x62, 0x57, 0x19, 0x98, 0xe2, 0xf7, 0xde, 0xdd,
+	0xe9, 0xee, 0x02, 0x17, 0xac, 0xa0, 0x4c, 0x55, 0x55, 0x5e, 0x37, 0xca, 0x28, 0x14, 0xbb, 0x0f,
+	0x53, 0x22, 0xfd, 0x99, 0xc0, 0xec, 0x85, 0x6b, 0x4d, 0x0f, 0x1c, 0xdd, 0x01, 0x30, 0x51, 0x72,
+	0x69, 0x0e, 0x6d, 0xb9, 0xc3, 0xe3, 0xe5, 0x38, 0x5b, 0x90, 0x93, 0x0d, 0x7a, 0x00, 0x60, 0x45,
+	0x2b, 0x8f, 0xda, 0xd0, 0xc6, 0xe0, 0xc9, 0x72, 0x9c, 0xcd, 0xef, 0xaf, 0xf2, 0x5e, 0x2a, 0x7f,
+	0xb2, 0xb7, 0x37, 0x7b, 0xdb, 0x8c, 0xc8, 0x09, 0x12, 0xad, 0x20, 0x71, 0xd3, 0x8e, 0x1a, 0x8a,
+	0xcf, 0x1c, 0xed, 0x72, 0x40, 0x5b, 0x53, 0x43, 0x37, 0x23, 0x12, 0x70, 0x96, 0x54, 0x2b, 0x21,
+	0x3e, 0x5b, 0xde, 0x7c, 0xe1, 0xf3, 0x21, 0x69, 0xab, 0x84, 0x78, 0xb5, 0x27, 0x4b, 0xf2, 0x38,
+	0xeb, 0xb0, 0x94, 0x7b, 0x55, 0x53, 0x76, 0xe4, 0x06, 0x47, 0x43, 0x87, 0xcf, 0x72, 0xaf, 0xb6,
+	0xee, 0x66, 0x1d, 0x06, 0xe4, 0x63, 0x0c, 0xd3, 0xbf, 0x57, 0xba, 0x06, 0x08, 0x39, 0x10, 0x86,
+	0x99, 0x73, 0xd4, 0xd5, 0x11, 0x91, 0x7e, 0x44, 0xb7, 0x5d, 0x26, 0x5d, 0x7e, 0x73, 0x57, 0x45,
+	0x44, 0xc2, 0x22, 0x7d, 0x87, 0xc4, 0xc7, 0xfa, 0x47, 0xe4, 0x06, 0x62, 0xf7, 0x94, 0x6d, 0xd5,
+	0x69, 0xf8, 0x19, 0x5d, 0xf7, 0x96, 0x5c, 0x63, 0x0b, 0xd2, 0x1b, 0x9c, 0x43, 0xe2, 0xc3, 0xa7,
+	0x19, 0x40, 0xc8, 0x64, 0xe5, 0x0a, 0xa5, 0x8d, 0xa4, 0x15, 0xef, 0xfe, 0x9e, 0x9f, 0x3f, 0xa6,
+	0xae, 0x84, 0xd5, 0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x5b, 0x3a, 0xe2, 0x6d, 0x09, 0x02, 0x00,
+	0x00,
 }
