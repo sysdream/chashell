@@ -199,6 +199,7 @@ func parseQuery(m *dns.Msg) {
 
 			rr, _ := dns.NewRR(fmt.Sprintf("%s TXT %s", q.Name, answer))
 			m.Answer = append(m.Answer, rr)
+			m.MsgHdr.Authoritative = true
 
 		}
 
